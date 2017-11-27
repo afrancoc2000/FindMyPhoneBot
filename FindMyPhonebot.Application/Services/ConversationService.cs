@@ -30,6 +30,21 @@ namespace FindMyPhonebot.Application.Services
             {
                 var intentionResult = await luisClient.GetUserIntent(message);
 
+                if (intentionResult.Telefono != null)
+                {
+                    var telefono = intentionResult.Telefono.Replace("-", "").Replace(" ", "");
+                    var success = long.TryParse(telefono, out long numeroTelefono);
+                    if (!success)
+                    {
+                        return Message.InvalidPhoneNumberMessage;
+                    }
+                    else
+                    {
+                        phoneCallClient.MakePhoneCall(numeroTelefono);
+                        return Message.CallingMessage;
+                    }
+                }
+
                 switch (intentionResult.Intention)
                 {
                     case Intention.Saludar:
@@ -39,21 +54,8 @@ namespace FindMyPhonebot.Application.Services
                         return Message.GoodByMessage;
 
                     case Intention.BuscarTelefono:
-                        if (intentionResult.Telefono == null)
-                        {
                             return Message.AskPhoneMessage;
-                        }
-
-                        var telefono = intentionResult.Telefono.Replace("-", "").Replace(" ", "");
-                        var success = long.TryParse(telefono, out long numeroTelefono);
-                        if (!success)
-                        {
-                            return Message.InvalidPhoneNumberMessage;
-                        }
-
-                        phoneCallClient.MakePhoneCall(numeroTelefono);
-                        return Message.CallingMessage;
-
+                       
                     case Intention.None:
                     default:
                         return Message.CantHelpMessage;
